@@ -17,8 +17,9 @@ screen.fill(WHITE)
 clock = pygame.time.Clock()
 
 all_sprites = pygame.sprite.Group()
-bombs = pygame.sprite.Group()
+platform = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
+horizontal_borders_bottom = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 
@@ -47,18 +48,44 @@ class Border(pygame.sprite.Sprite):
             self.add(vertical_borders)
             self.image = pygame.Surface([1, y2 - y1])
             self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
-            # горизонтальная стенка
+        # горизонтальная стенка
         else:
             self.add(horizontal_borders)
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
             self.add(horizontal_borders)
+            self.add(horizontal_borders_bottom)
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
 
-class Bomb(pygame.sprite.Sprite):
+class Player(pygame.sprite.Sprite):
+    def __init__(self, pos, fps):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((50, 10))
+        self.image.fill(pygame.Color("Grey"))
+
+        self.rect = self.image.get_rect()
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+
+        self.add(platform)
+
+        v = 50
+        self.vx = v / fps
+
+    def update(self, x):
+        if x > 0:
+            if self.rect.left > WIDTH:
+                self.rect.right = 0
+        if x < 0:
+            if self.rect.right < 0:
+                self.rect.left = WIDTH
+        self.rect = self.rect.move(x, 0)
+
+
+class Ball(pygame.sprite.Sprite):
     image = load_image("bomb3.png", -1)
     image_boom = load_image("boom.png", -1)
 
@@ -66,8 +93,8 @@ class Bomb(pygame.sprite.Sprite):
         super().__init__(group)
         self.image = Bomb.image
         self.rect = self.image.get_rect()
-        self.x = random.randrange(3) - 1
-        self.y = random.randrange(3) - 1
+        self.x = 250
+        self.y = 440
 
         f = True
 
@@ -97,23 +124,30 @@ class Bomb(pygame.sprite.Sprite):
             self.image = self.image_boom
 
 
-Border(0, 0, WIDTH, 5)
-Border(0, HEIGHT, WIDTH, HEIGHT)
+Border(0, 0, WIDTH, 0)
+Border(-1, HEIGHT, WIDTH, HEIGHT)
 Border(0, 0, 0, HEIGHT)
 Border(WIDTH, 0, WIDTH, HEIGHT)
 
-for _ in range(10):
-    Bomb(all_sprites)
+Player((230, 450), 50)
 
 while running:
+    x = 0
     screen.fill(WHITE)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        x = -8
+    elif keys[pygame.K_RIGHT]:
+        x = 8
+    platform.update(x)
+
     all_sprites.draw(screen)
-    all_sprites.update(event)
+    #all_sprites.update(event)
 
     pygame.display.flip()
 
