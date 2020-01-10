@@ -8,6 +8,7 @@ WIDTH = 500
 HEIGHT = 500
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+colors = ["Red", "Green", "Blue", "Pink", "Purple", "Yellow", "Brown", "Grey", "Black", "White"]
 
 pygame.init()
 
@@ -18,6 +19,7 @@ clock = pygame.time.Clock()
 
 all_sprites = pygame.sprite.Group()
 platform = pygame.sprite.Group()
+bricks = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 horizontal_borders_bottom = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
@@ -60,8 +62,21 @@ class Border(pygame.sprite.Sprite):
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
 
+class Bricks(pygame.sprite.Sprite):
+    def __init__(self, pos, color):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((65, 15))
+        self.image.fill(pygame.Color(color))
+
+        self.rect = self.image.get_rect()
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+
+        self.add(bricks)
+
+
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, fps):
+    def __init__(self, pos):
         super().__init__(all_sprites)
         self.image = pygame.Surface((50, 10))
         self.image.fill(pygame.Color("Grey"))
@@ -71,9 +86,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = pos[1]
 
         self.add(platform)
-
-        v = 50
-        self.vx = v / fps
 
     def update(self, x):
         if x > 0:
@@ -124,16 +136,21 @@ class Ball(pygame.sprite.Sprite):
             self.image = self.image_boom
 
 
-Border(0, 0, WIDTH, 0)
-Border(-1, HEIGHT, WIDTH, HEIGHT)
-Border(0, 0, 0, HEIGHT)
+Border(0, -1, WIDTH, 0)
+Border(0, HEIGHT, WIDTH, HEIGHT)
+Border(-1, 0, 0, HEIGHT)
 Border(WIDTH, 0, WIDTH, HEIGHT)
 
-Player((230, 450), 50)
+Player((230, 450))
+
+for j in range(15):
+    for i in range(7):
+        color = random.choice(colors)
+        Bricks((8 + 70 * i, 8 + 20 * j), color)
 
 while running:
     x = 0
-    screen.fill(WHITE)
+    screen.fill((30, 170, 40))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
