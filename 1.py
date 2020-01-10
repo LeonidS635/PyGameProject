@@ -20,6 +20,7 @@ clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 platform = pygame.sprite.Group()
 bricks = pygame.sprite.Group()
+ball = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 horizontal_borders_bottom = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
@@ -98,55 +99,70 @@ class Player(pygame.sprite.Sprite):
 
 
 class Ball(pygame.sprite.Sprite):
-    image = load_image("bomb3.png", -1)
-    image_boom = load_image("boom.png", -1)
+    def __init__(self, radius, fps):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((2 * radius, 2 * radius), pygame.SRCALPHA, 32)
+        pygame.draw.circle(self.image, pygame.Color("red"), (radius, radius), radius)
+        self.rect = pygame.Rect(250, 420, 2 * radius, 2 * radius)
 
-    def __init__(self, group):
-        super().__init__(group)
-        self.image = Bomb.image
-        self.rect = self.image.get_rect()
-        self.x = 250
-        self.y = 440
+        v = 50
+        self.vy = v / fps
+        self.vx = v / fps
 
-        f = True
+        self.add(ball)
 
-        while f:
-            self.rect.x = random.randrange(WIDTH)
-            self.rect.y = random.randrange(HEIGHT)
-
-            if (pygame.sprite.spritecollideany(self, bombs) is None and (
-                    pygame.sprite.spritecollideany(self, horizontal_borders) is None) and (
-                    pygame.sprite.spritecollideany(self, vertical_borders) is None)):
-                f = False
-
-        self.add(bombs)
 
     def update(self, *args):
-        if len(pygame.sprite.spritecollide(self, bombs, False)) >= 2:
-            self.x = -self.x
-            self.y = -self.y
-        if pygame.sprite.spritecollideany(self, vertical_borders):
-            self.x = -self.x
+        #if len(pygame.sprite.spritecollide(self, bombs, False)) >= 2:
+         #   self.x = -self.x
+          #  self.y = -self.y
+        if pygame.sprite.spritecollideany(self, platform):
+            brick_list = pygame.sprite.spritecollide(self, platform, False)
+            for brick in brick_list:
+                if abs(self.rect.y - brick.rect.y) <= 10 and self.rect.x < brick.rect.x:
+                    print(1)
+                    if self.vx < 0:
+                        self.vy = -self.vy
+                        self.rect.x = brick.rect.x - 11
+                    else:
+                        self.vx = -self.vx
+                        self.vy = -self.vy
+                elif abs(self.rect.y - brick.rect.y) <= 10 and self.rect.x >= brick.rect.x + 50:
+                    print(2)
+                    if self.vx < 0:
+                        self.vx = -self.vx
+                    else:
+                        self.vy = -self.vy
+                else:
+                    self.vy = -self.vy
+        if pygame.sprite.spritecollide(self, bricks, True):
+            brick_list = pygame.sprite.spritecollide(self, bricks, True)
+            for brick in brick_list:
+                if self.rect.right == brick.rect.left or self.rect.left == brick.rect.right:
+                    self.vx = -self.vx
+            self.vy = -self.vy
         if pygame.sprite.spritecollideany(self, horizontal_borders):
-            self.y = -self.y
+            self.vy = -self.vy
+        if pygame.sprite.spritecollideany(self, vertical_borders):
+            self.vx = -self.vx
+        #self.rect = self.rect.move(self.x, self.y)
 
-        self.rect = self.rect.move(self.x, self.y)
-
-        if args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos):
-            self.image = self.image_boom
+        #if args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos):
+         #   self.image = self.image_boom
+        self.rect = self.rect.move(self.vx, self.vy)
 
 
 Border(0, -1, WIDTH, 0)
 Border(0, HEIGHT, WIDTH, HEIGHT)
-Border(-1, 0, 0, HEIGHT)
+Border(0, 0, 0, HEIGHT)
 Border(WIDTH, 0, WIDTH, HEIGHT)
 
 Player((230, 450))
+Ball(5, 50)
 
 for j in range(15):
     for i in range(7):
-        color = random.choice(colors)
-        Bricks((8 + 70 * i, 8 + 20 * j), color)
+        Bricks((8 + 70 * i, 8 + 20 * j), random.choice(colors))
 
 while running:
     x = 0
@@ -162,9 +178,10 @@ while running:
     elif keys[pygame.K_RIGHT]:
         x = 8
     platform.update(x)
+    ball.update()
 
     all_sprites.draw(screen)
-    #all_sprites.update(event)
+    #all_sprites.update()
 
     pygame.display.flip()
 
