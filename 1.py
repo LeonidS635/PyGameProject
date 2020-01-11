@@ -8,6 +8,7 @@ WIDTH = 500
 HEIGHT = 500
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+colors = ["Red", "Green", "Blue", "Pink", "Purple", "Yellow", "Brown", "Grey", "Black", "White"]
 
 pygame.init()
 
@@ -17,8 +18,11 @@ screen.fill(WHITE)
 clock = pygame.time.Clock()
 
 all_sprites = pygame.sprite.Group()
-bombs = pygame.sprite.Group()
+platform = pygame.sprite.Group()
+bricks = pygame.sprite.Group()
+ball = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
+horizontal_borders_bottom = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 
@@ -47,73 +51,137 @@ class Border(pygame.sprite.Sprite):
             self.add(vertical_borders)
             self.image = pygame.Surface([1, y2 - y1])
             self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
-            # горизонтальная стенка
+        # горизонтальная стенка
         else:
             self.add(horizontal_borders)
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
             self.add(horizontal_borders)
+            self.add(horizontal_borders_bottom)
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
 
-class Bomb(pygame.sprite.Sprite):
-    image = load_image("bomb3.png", -1)
-    image_boom = load_image("boom.png", -1)
+class Bricks(pygame.sprite.Sprite):
+    def __init__(self, pos, color):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((65, 15))
+        self.image.fill(pygame.Color(color))
 
-    def __init__(self, group):
-        super().__init__(group)
-        self.image = Bomb.image
         self.rect = self.image.get_rect()
-        self.x = random.randrange(3) - 1
-        self.y = random.randrange(3) - 1
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
 
-        f = True
+        self.add(bricks)
 
-        while f:
-            self.rect.x = random.randrange(WIDTH)
-            self.rect.y = random.randrange(HEIGHT)
 
-            if (pygame.sprite.spritecollideany(self, bombs) is None and (
-                    pygame.sprite.spritecollideany(self, horizontal_borders) is None) and (
-                    pygame.sprite.spritecollideany(self, vertical_borders) is None)):
-                f = False
+class Player(pygame.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((50, 10))
+        self.image.fill(pygame.Color("Grey"))
 
-        self.add(bombs)
+        self.rect = self.image.get_rect()
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
 
-    def update(self, *args):
-        if len(pygame.sprite.spritecollide(self, bombs, False)) >= 2:
-            self.x = -self.x
-            self.y = -self.y
-        if pygame.sprite.spritecollideany(self, vertical_borders):
-            self.x = -self.x
+        self.add(platform)
+
+    def update(self, x):
+        if x > 0:
+            if self.rect.left > WIDTH:
+                self.rect.right = 0
+        if x < 0:
+            if self.rect.right < 0:
+                self.rect.left = WIDTH
+        self.rect = self.rect.move(x, 0)
+
+
+class Ball(pygame.sprite.Sprite):
+    def __init__(self, radius):
+        super().__init__(all_sprites)
+        self.image = pygame.Surface((2 * radius, 2 * radius), pygame.SRCALPHA, 32)
+        pygame.draw.circle(self.image, pygame.Color("red"), (radius, radius), radius)
+        self.rect = pygame.Rect(250, 420, 2 * radius, 2 * radius)
+
+        self.v = 100
+        self.vy = self.v / FPS
+        self.vx = self.v / FPS
+
+        self.add(ball)
+
+    def update(self):
         if pygame.sprite.spritecollideany(self, horizontal_borders):
-            self.y = -self.y
+            self.vy = -self.vy
+        if pygame.sprite.spritecollideany(self, vertical_borders):
+            self.vx = -self.vx
 
-        self.rect = self.rect.move(self.x, self.y)
+        if pygame.sprite.spritecollideany(self, platform):
+            platform_list = pygame.sprite.spritecollide(self, platform, False)
+            for pl in platform_list:
+                if abs(self.rect.y - pl.rect.y) < 8 and 0 < pl.rect.center[0] - self.rect.center[0] < 30:
+                    self.rect.x = pl.rect.x - 11
+                    self.vy = -self.v / FPS
+                    self.vx = -self.v / FPS
+                    pl.vx = 0
+                elif abs(self.rect.y - pl.rect.y) < 8 and 0 < self.rect.center[0] - pl.rect.center[0] < 30:
+                    self.rect.x = pl.rect.x + 50
+                    self.vy = -self.v / FPS
+                    self.vx = self.v / FPS
+                    pl.vx = 0
+                else:
+                    self.vy = -self.vy
 
-        if args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos):
-            self.image = self.image_boom
+        if pygame.sprite.spritecollideany(self, bricks):
+            brick_list = pygame.sprite.spritecollide(self, bricks, True)
+            for brick in brick_list:
+                print(self.rect.y, brick.rect.y)
+                if abs(self.rect.y - brick.rect.y) < 8 and 0 < brick.rect.center[0] - self.rect.center[0] < 38:
+                    self.vx = -self.vx
+                elif abs(self.rect.y - brick.rect.y) < 8 and 0 < self.rect.center[0] - brick.rect.center[0] < 38:
+                    self.vx = -self.vx
+                else:
+                    self.vy = -self.vy
+
+        if self.rect.left < -1 or self.rect.right > WIDTH + 1:
+            self.rect.x = 250
+            self.rect.y = 350
+            self.vy = self.v / FPS
+
+        self.rect = self.rect.move(self.vx, self.vy)
 
 
-Border(0, 0, WIDTH, 5)
+Border(0, -1, WIDTH, 0)
 Border(0, HEIGHT, WIDTH, HEIGHT)
 Border(0, 0, 0, HEIGHT)
-Border(WIDTH, 0, WIDTH, HEIGHT)
+Border(WIDTH - 1, 0, WIDTH - 1, HEIGHT)
 
-for _ in range(10):
-    Bomb(all_sprites)
+Player((230, 450))
+Ball(5)
+
+for j in range(15):
+    for i in range(7):
+        Bricks((8 + 70 * i, 8 + 20 * j), random.choice(colors))
 
 while running:
-    screen.fill(WHITE)
+    x = 0
+    screen.fill((30, 170, 40))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        x = -8
+    elif keys[pygame.K_RIGHT]:
+        x = 8
+    platform.update(x)
+    ball.update()
+
     all_sprites.draw(screen)
-    all_sprites.update(event)
+    #all_sprites.update()
 
     pygame.display.flip()
 
