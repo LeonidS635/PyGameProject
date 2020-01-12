@@ -3,7 +3,7 @@ import os
 import random
 
 running = True
-flag = False
+flag = True
 FPS = 50
 WIDTH = 500
 HEIGHT = 500
@@ -76,7 +76,7 @@ def start_screen():
         screen.blit(string_rendered, intro_rect)
 
     font = pygame.font.Font(None, 40)
-    text_coord = HEIGHT - 130
+    text_coord = HEIGHT * 0.9
     string_rendered = font.render(intro_text[-1], 1, (23, 70, 200))
     intro_rect = string_rendered.get_rect()
     intro_rect.top = text_coord
@@ -210,7 +210,6 @@ def start():
         for i in range(7):
             Bricks((8 + 70 * i, 8 + 20 * j), random.choice(colors))
 
-
 start_screen()
 
 while running:
@@ -220,14 +219,19 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-            if not flag:
+            if flag:
                 start()
-            flag = True
+            flag = False
 
-    if flag:
+    if not flag:
         screen.fill((30, 170, 40))
 
         keys = pygame.key.get_pressed()
+        if keys[pygame.K_r]:
+            for sprite in all_sprites:
+                sprite.kill()
+            start_screen()
+            flag = True
         if keys[pygame.K_LEFT]:
             x = -8
         elif keys[pygame.K_RIGHT]:
