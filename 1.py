@@ -60,7 +60,7 @@ def start_screen():
     intro_rect = string_rendered.get_rect()
     text_coord += 10
     intro_rect.top = text_coord
-    intro_rect.x = WIDTH /2 - 86
+    intro_rect.x = WIDTH / 2 - 86
     text_coord += intro_rect.height
     screen.blit(string_rendered, intro_rect)
 
@@ -167,13 +167,13 @@ class Player(pygame.sprite.Sprite):
 
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, radius):
+    def __init__(self, radius, v_ball):
         super().__init__(all_sprites)
         self.image = pygame.Surface((2 * radius, 2 * radius), pygame.SRCALPHA, 32)
         pygame.draw.circle(self.image, pygame.Color("red"), (radius, radius), radius)
         self.rect = pygame.Rect(250, 420, 2 * radius, 2 * radius)
 
-        self.v = 100
+        self.v = v_ball
         self.vy = self.v / FPS
         self.vx = self.v / FPS
 
@@ -218,12 +218,19 @@ class Ball(pygame.sprite.Sprite):
                 else:
                     self.vy = -self.vy
 
-        if self.rect.left < -1 or self.rect.right > WIDTH + 1:
+        if self.rect.left < -5 or self.rect.right > WIDTH + 5:
             self.rect.x = 250
             self.rect.y = 350
             self.vy = self.v / FPS
 
         self.rect = self.rect.move(self.vx, self.vy)
+
+
+def level_1():
+    v_platform = 8
+    v_ball = 100
+    FLAG_LEVEL_1 = True
+    return v_platform, v_ball, FLAG_LEVEL_1
 
 
 def start():
@@ -233,11 +240,13 @@ def start():
     Border(WIDTH - 1, 0, WIDTH - 1, HEIGHT)
 
     Player((230, 450))
-    Ball(5)
+    if FLAG_LEVEL_1:
+        Ball(5, level_1()[1])
 
     for j in range(15):
         for i in range(7):
             Bricks((8 + 70 * i, 8 + 20 * j), random.choice(colors))
+
 
 start_screen()
 
@@ -249,6 +258,7 @@ while running:
             running = False
         elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
             if flag:
+                FLAG_LEVEL_1 = level_1()[2]
                 start()
             flag = False
 
@@ -261,10 +271,13 @@ while running:
                 sprite.kill()
             start_screen()
             flag = True
+            FLAG_LEVEL_1 = False
         elif keys[pygame.K_LEFT]:
-            x = -8
+            if FLAG_LEVEL_1:
+                x = -level_1()[0]
         elif keys[pygame.K_RIGHT]:
-            x = 8
+            if FLAG_LEVEL_1:
+                x = level_1()[0]
         platform.update(x)
         ball.update()
         gameover.update()
