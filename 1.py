@@ -22,6 +22,7 @@ all_sprites = pygame.sprite.Group()
 platform = pygame.sprite.Group()
 bricks = pygame.sprite.Group()
 ball = pygame.sprite.Group()
+gameover = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 horizontal_borders_bottom = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
@@ -84,6 +85,28 @@ def start_screen():
     screen.blit(string_rendered, intro_rect)
 
 
+class GameOver(pygame.sprite.Sprite):
+    image1 = load_image("game_over.png")
+    image = pygame.transform.scale(image1, (WIDTH + 10, HEIGHT))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = GameOver.image
+        self.rect = self.image.get_rect()
+        self.rect.x = -WIDTH
+        self.rect.y = 0
+
+        self.add(gameover)
+
+    def update(self):
+        v = 300
+        x = v / FPS
+        self.rect.x += x
+        if self.rect.x >= -5:
+            x = -x
+        self.rect = self.rect.move(x, 0)
+
+
 class Border(pygame.sprite.Sprite):
     def __init__(self, x1, y1, x2, y2):
         super().__init__(all_sprites)
@@ -144,56 +167,62 @@ class Player(pygame.sprite.Sprite):
 
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, radius, fps):
+    def __init__(self, radius):
         super().__init__(all_sprites)
         self.image = pygame.Surface((2 * radius, 2 * radius), pygame.SRCALPHA, 32)
         pygame.draw.circle(self.image, pygame.Color("red"), (radius, radius), radius)
         self.rect = pygame.Rect(250, 420, 2 * radius, 2 * radius)
 
-        v = 50
-        self.vy = v / fps
-        self.vx = v / fps
+        self.v = 100
+        self.vy = self.v / FPS
+        self.vx = self.v / FPS
 
         self.add(ball)
 
-
-    def update(self, *args):
-        #if len(pygame.sprite.spritecollide(self, bombs, False)) >= 2:
-         #   self.x = -self.x
-          #  self.y = -self.y
-        if pygame.sprite.spritecollideany(self, platform):
-            brick_list = pygame.sprite.spritecollide(self, platform, False)
-            for brick in brick_list:
-                if abs(self.rect.y - brick.rect.y) <= 10 and self.rect.x < brick.rect.x:
-                    print(1)
-                    if self.vx < 0:
-                        self.vy = -self.vy
-                        self.rect.x = brick.rect.x - 11
-                    else:
-                        self.vx = -self.vx
-                        self.vy = -self.vy
-                elif abs(self.rect.y - brick.rect.y) <= 10 and self.rect.x >= brick.rect.x + 50:
-                    print(2)
-                    if self.vx < 0:
-                        self.vx = -self.vx
-                    else:
-                        self.vy = -self.vy
-                else:
-                    self.vy = -self.vy
-        if pygame.sprite.spritecollide(self, bricks, True):
-            brick_list = pygame.sprite.spritecollide(self, bricks, True)
-            for brick in brick_list:
-                if self.rect.right == brick.rect.left or self.rect.left == brick.rect.right:
-                    self.vx = -self.vx
-            self.vy = -self.vy
+    def update(self):
         if pygame.sprite.spritecollideany(self, horizontal_borders):
-            self.vy = -self.vy
+            if pygame.sprite.spritecollideany(self, horizontal_borders):
+                self.vy = 0
+                self.vx = 0
+                self.rect.x = 250
+                self.rect.y = 420
+                GameOver()
+            else:
+                self.vy = -self.vy
         if pygame.sprite.spritecollideany(self, vertical_borders):
             self.vx = -self.vx
-        #self.rect = self.rect.move(self.x, self.y)
 
-        #if args and args[0].type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(args[0].pos):
-         #   self.image = self.image_boom
+        if pygame.sprite.spritecollideany(self, platform):
+            platform_list = pygame.sprite.spritecollide(self, platform, False)
+            for pl in platform_list:
+                if abs(self.rect.y - pl.rect.y) < 8 and 0 < pl.rect.center[0] - self.rect.center[0] < 30:
+                    self.rect.x = pl.rect.x - 11
+                    self.vy = -self.v / FPS
+                    self.vx = -self.v / FPS
+                    pl.vx = 0
+                elif abs(self.rect.y - pl.rect.y) < 8 and 0 < self.rect.center[0] - pl.rect.center[0] < 30:
+                    self.rect.x = pl.rect.x + 50
+                    self.vy = -self.v / FPS
+                    self.vx = self.v / FPS
+                    pl.vx = 0
+                else:
+                    self.vy = -self.vy
+
+        if pygame.sprite.spritecollideany(self, bricks):
+            brick_list = pygame.sprite.spritecollide(self, bricks, True)
+            for brick in brick_list:
+                if abs(self.rect.y - brick.rect.y) < 8 and 0 < brick.rect.center[0] - self.rect.center[0] < 38:
+                    self.vx = -self.vx
+                elif abs(self.rect.y - brick.rect.y) < 8 and 0 < self.rect.center[0] - brick.rect.center[0] < 38:
+                    self.vx = -self.vx
+                else:
+                    self.vy = -self.vy
+
+        if self.rect.left < -1 or self.rect.right > WIDTH + 1:
+            self.rect.x = 250
+            self.rect.y = 350
+            self.vy = self.v / FPS
+
         self.rect = self.rect.move(self.vx, self.vy)
 
 
@@ -201,10 +230,10 @@ def start():
     Border(0, -1, WIDTH, 0)
     Border(0, HEIGHT, WIDTH, HEIGHT)
     Border(0, 0, 0, HEIGHT)
-    Border(WIDTH, 0, WIDTH, HEIGHT)
+    Border(WIDTH - 1, 0, WIDTH - 1, HEIGHT)
 
     Player((230, 450))
-    Ball(5, 50)
+    Ball(5)
 
     for j in range(15):
         for i in range(7):
@@ -232,14 +261,15 @@ while running:
                 sprite.kill()
             start_screen()
             flag = True
-        if keys[pygame.K_LEFT]:
+        elif keys[pygame.K_LEFT]:
             x = -8
         elif keys[pygame.K_RIGHT]:
             x = 8
         platform.update(x)
         ball.update()
+        gameover.update()
 
-        all_sprites.draw(screen)
+    all_sprites.draw(screen)
     #all_sprites.update()
 
     pygame.display.flip()
