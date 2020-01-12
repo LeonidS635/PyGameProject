@@ -3,6 +3,7 @@ import os
 import random
 
 running = True
+flag = False
 FPS = 50
 WIDTH = 500
 HEIGHT = 500
@@ -37,6 +38,50 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+def start_screen():
+    intro_text = ["АРКАНОИД", "", "",
+                  "Правила игры: управляйте платформой",
+                  "с помощью стрелок на клавиатуре", "",
+                  "Цель - убрать все блоки", "",
+                  "Не допускайте падения шарика",
+                  "(касания нижней границы экрана)",
+                  "Приятной игры!"]
+
+    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+
+    font = pygame.font.Font(None, 40)
+    text_coord = 50
+
+    string_rendered = font.render(intro_text[0], 1, (23, 70, 200))
+    intro_rect = string_rendered.get_rect()
+    text_coord += 10
+    intro_rect.top = text_coord
+    intro_rect.x = WIDTH /2 - 86
+    text_coord += intro_rect.height
+    screen.blit(string_rendered, intro_rect)
+
+    font = pygame.font.Font(None, 30)
+    text_coord = 50
+
+    for line in intro_text[1:-1]:
+        string_rendered = font.render(line, 1, pygame.Color('black'))
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    font = pygame.font.Font(None, 40)
+    text_coord = HEIGHT - 130
+    string_rendered = font.render(intro_text[-1], 1, (23, 70, 200))
+    intro_rect = string_rendered.get_rect()
+    intro_rect.top = text_coord
+    intro_rect.x = WIDTH / 2 - 110
+    screen.blit(string_rendered, intro_rect)
 
 
 class Border(pygame.sprite.Sprite):
@@ -152,35 +197,45 @@ class Ball(pygame.sprite.Sprite):
         self.rect = self.rect.move(self.vx, self.vy)
 
 
-Border(0, -1, WIDTH, 0)
-Border(0, HEIGHT, WIDTH, HEIGHT)
-Border(0, 0, 0, HEIGHT)
-Border(WIDTH, 0, WIDTH, HEIGHT)
+def start():
+    Border(0, -1, WIDTH, 0)
+    Border(0, HEIGHT, WIDTH, HEIGHT)
+    Border(0, 0, 0, HEIGHT)
+    Border(WIDTH, 0, WIDTH, HEIGHT)
 
-Player((230, 450))
-Ball(5, 50)
+    Player((230, 450))
+    Ball(5, 50)
 
-for j in range(15):
-    for i in range(7):
-        Bricks((8 + 70 * i, 8 + 20 * j), random.choice(colors))
+    for j in range(15):
+        for i in range(7):
+            Bricks((8 + 70 * i, 8 + 20 * j), random.choice(colors))
+
+
+start_screen()
 
 while running:
     x = 0
-    screen.fill((30, 170, 40))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+            if not flag:
+                start()
+            flag = True
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        x = -8
-    elif keys[pygame.K_RIGHT]:
-        x = 8
-    platform.update(x)
-    ball.update()
+    if flag:
+        screen.fill((30, 170, 40))
 
-    all_sprites.draw(screen)
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            x = -8
+        elif keys[pygame.K_RIGHT]:
+            x = 8
+        platform.update(x)
+        ball.update()
+
+        all_sprites.draw(screen)
     #all_sprites.update()
 
     pygame.display.flip()
