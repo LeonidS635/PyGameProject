@@ -21,6 +21,7 @@ all_sprites = pygame.sprite.Group()
 platform = pygame.sprite.Group()
 bricks = pygame.sprite.Group()
 ball = pygame.sprite.Group()
+gameover = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 horizontal_borders_bottom = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
@@ -37,6 +38,28 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+class GameOver(pygame.sprite.Sprite):
+    image1 = load_image("game_over.png")
+    image = pygame.transform.scale(image1, (WIDTH + 10, HEIGHT))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = GameOver.image
+        self.rect = self.image.get_rect()
+        self.rect.x = -WIDTH
+        self.rect.y = 0
+
+        self.add(gameover)
+
+    def update(self):
+        v = 300
+        x = v / FPS
+        self.rect.x += x
+        if self.rect.x >= -5:
+            x = -x
+        self.rect = self.rect.move(x, 0)
 
 
 class Border(pygame.sprite.Sprite):
@@ -113,7 +136,14 @@ class Ball(pygame.sprite.Sprite):
 
     def update(self):
         if pygame.sprite.spritecollideany(self, horizontal_borders):
-            self.vy = -self.vy
+            if pygame.sprite.spritecollideany(self, horizontal_borders):
+                self.vy = 0
+                self.vx = 0
+                self.rect.x = 250
+                self.rect.y = 420
+                GameOver()
+            else:
+                self.vy = -self.vy
         if pygame.sprite.spritecollideany(self, vertical_borders):
             self.vx = -self.vx
 
@@ -136,7 +166,6 @@ class Ball(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, bricks):
             brick_list = pygame.sprite.spritecollide(self, bricks, True)
             for brick in brick_list:
-                print(self.rect.y, brick.rect.y)
                 if abs(self.rect.y - brick.rect.y) < 8 and 0 < brick.rect.center[0] - self.rect.center[0] < 38:
                     self.vx = -self.vx
                 elif abs(self.rect.y - brick.rect.y) < 8 and 0 < self.rect.center[0] - brick.rect.center[0] < 38:
@@ -179,6 +208,7 @@ while running:
         x = 8
     platform.update(x)
     ball.update()
+    gameover.update()
 
     all_sprites.draw(screen)
     #all_sprites.update()
