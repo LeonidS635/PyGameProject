@@ -4,6 +4,8 @@ import random
 
 running = True
 flag = True
+FLAG_LEVEL_1 = False
+FLAG_LEVEL_2 = False
 FPS = 50
 WIDTH = 500
 HEIGHT = 500
@@ -108,25 +110,19 @@ class GameOver(pygame.sprite.Sprite):
 
 
 class Border(pygame.sprite.Sprite):
-    def __init__(self, x1, y1, x2, y2):
+    def __init__(self, x1, y1, x2, y2, flag_bottom):
         super().__init__(all_sprites)
+        self.flag_bottom = flag_bottom
         # вертикальная стенка
         if x1 == x2:
-            self.add(vertical_borders)
-            self.image = pygame.Surface([1, y2 - y1])
-            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
-
             self.add(vertical_borders)
             self.image = pygame.Surface([1, y2 - y1])
             self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
         # горизонтальная стенка
         else:
             self.add(horizontal_borders)
-            self.image = pygame.Surface([x2 - x1, 1])
-            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
-
-            self.add(horizontal_borders)
-            self.add(horizontal_borders_bottom)
+            if self.flag_bottom:
+                self.add(horizontal_borders_bottom)
             self.image = pygame.Surface([x2 - x1, 1])
             self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
 
@@ -181,7 +177,7 @@ class Ball(pygame.sprite.Sprite):
 
     def update(self):
         if pygame.sprite.spritecollideany(self, horizontal_borders):
-            if pygame.sprite.spritecollideany(self, horizontal_borders):
+            if pygame.sprite.spritecollideany(self, horizontal_borders_bottom):
                 self.vy = 0
                 self.vx = 0
                 self.rect.x = 250
@@ -232,16 +228,23 @@ def level_1():
     FLAG_LEVEL_1 = True
     return v_platform, v_ball, FLAG_LEVEL_1
 
+def level_2():
+    v_platform = 4
+    v_ball = 150
+    return v_platform, v_ball
+
 
 def start():
-    Border(0, -1, WIDTH, 0)
-    Border(0, HEIGHT, WIDTH, HEIGHT)
-    Border(0, 0, 0, HEIGHT)
-    Border(WIDTH - 1, 0, WIDTH - 1, HEIGHT)
+    Border(0, 0, WIDTH, 0, False)
+    Border(0, HEIGHT, WIDTH, HEIGHT, True)
+    Border(0, 0, 0, HEIGHT, False)
+    Border(WIDTH - 1, 0, WIDTH - 1, HEIGHT, False)
 
     Player((230, 450))
     if FLAG_LEVEL_1:
         Ball(5, level_1()[1])
+    if FLAG_LEVEL_2:
+        Ball(5, level_2()[1])
 
     for j in range(15):
         for i in range(7):
@@ -258,7 +261,8 @@ while running:
             running = False
         elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
             if flag:
-                FLAG_LEVEL_1 = level_1()[2]
+                if not FLAG_LEVEL_2:
+                    FLAG_LEVEL_1 = level_1()[2]
                 start()
             flag = False
 
@@ -272,15 +276,33 @@ while running:
             start_screen()
             flag = True
             FLAG_LEVEL_1 = False
+        elif keys[pygame.K_ESCAPE]:
+            for sprite in all_sprites:
+                sprite.kill()
+            start_screen()
+            flag = True
+            FLAG_LEVEL_1 = False
+            FLAG_LEVEL_2 = False
         elif keys[pygame.K_LEFT]:
             if FLAG_LEVEL_1:
                 x = -level_1()[0]
+            if FLAG_LEVEL_2:
+                x = -level_2()[0]
         elif keys[pygame.K_RIGHT]:
             if FLAG_LEVEL_1:
                 x = level_1()[0]
+            if FLAG_LEVEL_2:
+                x = level_2()[0]
         platform.update(x)
         ball.update()
         gameover.update()
+
+    if len(bricks) == 0 and FLAG_LEVEL_1:
+        FLAG_LEVEL_1 = False
+        FLAG_LEVEL_2 = True
+        for sprite in all_sprites:
+            sprite.kill()
+        start()
 
     all_sprites.draw(screen)
     #all_sprites.update()
