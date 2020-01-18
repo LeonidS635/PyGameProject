@@ -4,7 +4,7 @@ import random
 
 running = True
 flag = True
-FLAG_LEVEL_1 = False
+FLAG_LEVEL_1 = True
 FLAG_LEVEL_2 = False
 FLAG_LEVEL_3 = False
 LEVEL_3_BALL = 0
@@ -227,8 +227,7 @@ class Ball(pygame.sprite.Sprite):
 def level_1():
     v_platform = 8
     v_ball = 100
-    FLAG_LEVEL_1 = True
-    return v_platform, v_ball, FLAG_LEVEL_1
+    return v_platform, v_ball
 
 
 def level_2():
@@ -279,14 +278,15 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == MYEVENTTYPE and LEVEL_3_BALL < 2:
-            Ball(5, level_3()[1])
-            LEVEL_3_BALL += 1
         elif (event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN) and flag:
-            if not FLAG_LEVEL_2:
+            if not FLAG_LEVEL_2 and not FLAG_LEVEL_3 and not FLAG_LEVEL_4:
                 FLAG_LEVEL_1 = True
             start()
             flag = False
+            LEVEL_3_BALL = 0
+        if event.type == MYEVENTTYPE and LEVEL_3_BALL < 2 and FLAG_LEVEL_3:
+            Ball(5, level_3()[1])
+            LEVEL_3_BALL += 1
 
     if not flag:
         screen.fill((30, 170, 40))
@@ -296,17 +296,8 @@ while running:
         if keys[pygame.K_r]:
             for sprite in all_sprites:
                 sprite.kill()
-
+            start_screen()
             flag = True
-            FLAG_LEVEL_1 = False
-            if FLAG_LEVEL_2:
-                FLAG_LEVEL_1 = False
-                FLAG_LEVEL_3 = False
-            if FLAG_LEVEL_3:
-                FLAG_LEVEL_2 = False
-            if FLAG_LEVEL_4:
-                FLAG_LEVEL_2 = False
-                FLAG_LEVEL_3 = False
 
         elif keys[pygame.K_ESCAPE]:
             for sprite in all_sprites:
@@ -317,6 +308,7 @@ while running:
             FLAG_LEVEL_2 = False
             FLAG_LEVEL_3 = False
             FLAG_LEVEL_4 = False
+
         elif keys[pygame.K_LEFT]:
             if FLAG_LEVEL_1:
                 x = -level_1()[0]
@@ -326,6 +318,7 @@ while running:
                 x = -level_3()[0]
             if FLAG_LEVEL_4:
                 x = -level_4()[0]
+
         elif keys[pygame.K_RIGHT]:
             if FLAG_LEVEL_1:
                 x = level_1()[0]
@@ -335,31 +328,33 @@ while running:
                 x = level_3()[0]
             if FLAG_LEVEL_4:
                 x = level_4()[0]
+
         platform.update(x)
         ball.update()
         gameover.update()
 
-    if len(bricks) <= 103 and FLAG_LEVEL_1:
-        FLAG_LEVEL_1 = False
-        FLAG_LEVEL_2 = True
-        for sprite in all_sprites:
-            sprite.kill()
-        start()
+    if not flag:
+        if len(bricks) <= 103 and FLAG_LEVEL_1:
+            FLAG_LEVEL_1 = False
+            FLAG_LEVEL_2 = True
+            for sprite in all_sprites:
+                sprite.kill()
+            start()
 
-    if len(bricks) <= 103 and FLAG_LEVEL_2:
-        FLAG_LEVEL_2 = False
-        FLAG_LEVEL_3 = True
-        LEVEL_3_BALL = 0
-        for sprite in all_sprites:
-            sprite.kill()
-        start()
+        if len(bricks) <= 103 and FLAG_LEVEL_2:
+            FLAG_LEVEL_2 = False
+            FLAG_LEVEL_3 = True
+            LEVEL_3_BALL = 0
+            for sprite in all_sprites:
+                sprite.kill()
+            start()
 
-    if len(bricks) <= 100 and FLAG_LEVEL_3:
-        FLAG_LEVEL_3 = False
-        FLAG_LEVEL_4 = True
-        for sprite in all_sprites:
-            sprite.kill()
-        start()
+        if len(bricks) <= 100 and FLAG_LEVEL_3:
+            FLAG_LEVEL_3 = False
+            FLAG_LEVEL_4 = True
+            for sprite in all_sprites:
+                sprite.kill()
+            start()
 
     all_sprites.draw(screen)
     #all_sprites.update()
