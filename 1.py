@@ -10,6 +10,7 @@ FLAG_LEVEL_3 = False
 LEVEL_3_BALL = 0
 FLAG_LEVEL_4 = False
 FLAG_WIN = False
+PAUSE = False
 MYEVENTTYPE = 30
 TIME = 20
 GRAVITY = 0.5
@@ -20,6 +21,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 colors = ["Red", "Green", "Blue", "Pink", "Purple", "Yellow", "Brown", "Grey", "Black", "White"]
 screen_rect = (0, 0, WIDTH, HEIGHT)
+press = 1
 
 pygame.init()
 
@@ -228,14 +230,16 @@ class Player(pygame.sprite.Sprite):
 
         self.add(platform)
 
-    def update(self, x):
+    def update(self, x, flag):
         if x > 0:
             if self.rect.left > WIDTH:
                 self.rect.right = 0
         if x < 0:
             if self.rect.right < 0:
                 self.rect.left = WIDTH
-        self.rect = self.rect.move(x, 0)
+
+        if not flag:
+            self.rect = self.rect.move(x, 0)
 
 
 class Ball(pygame.sprite.Sprite):
@@ -251,7 +255,7 @@ class Ball(pygame.sprite.Sprite):
 
         self.add(ball)
 
-    def update(self):
+    def update(self, flag):
         if pygame.sprite.spritecollideany(self, horizontal_borders):
             if pygame.sprite.spritecollideany(self, horizontal_borders_bottom):
                 for sprite in ball:
@@ -293,7 +297,8 @@ class Ball(pygame.sprite.Sprite):
             self.rect.y = 350
             self.vy = self.v / FPS
 
-        self.rect = self.rect.move(self.vx, self.vy)
+        if not flag:
+            self.rect = self.rect.move(self.vx, self.vy)
 
 
 def level_1():
@@ -350,7 +355,13 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif (event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN) and flag:
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            press *= -1
+            if press < 0:
+                PAUSE = True
+            else:
+                PAUSE = False
+        elif event.type == pygame.KEYDOWN and flag:
             if not FLAG_LEVEL_2 and not FLAG_LEVEL_3 and not FLAG_LEVEL_4:
                 FLAG_LEVEL_1 = True
             start()
@@ -380,6 +391,8 @@ while running:
                     sprite.kill()
                 start_screen()
                 flag = True
+            PAUSE = False
+            press = 1
 
         elif keys[pygame.K_ESCAPE]:
             for sprite in all_sprites:
@@ -391,6 +404,8 @@ while running:
             FLAG_LEVEL_3 = False
             FLAG_LEVEL_4 = False
             FLAG_WIN = False
+            PAUSE = False
+            press = 1
 
         elif keys[pygame.K_LEFT]:
             if FLAG_LEVEL_1:
@@ -412,8 +427,8 @@ while running:
             if FLAG_LEVEL_4:
                 x = level_4()[0]
 
-        platform.update(x)
-        ball.update()
+        platform.update(x, PAUSE)
+        ball.update(PAUSE)
         gameover.update()
         youwin.update()
         stars.update()
@@ -422,6 +437,7 @@ while running:
         if len(bricks) <= 103 and FLAG_LEVEL_1:
             FLAG_LEVEL_1 = False
             FLAG_LEVEL_2 = True
+            press = 1
             for sprite in all_sprites:
                 sprite.kill()
             start()
@@ -430,6 +446,7 @@ while running:
             FLAG_LEVEL_2 = False
             FLAG_LEVEL_3 = True
             LEVEL_3_BALL = 0
+            press = 1
             for sprite in all_sprites:
                 sprite.kill()
             start()
@@ -437,6 +454,7 @@ while running:
         if len(bricks) <= 100 and FLAG_LEVEL_3:
             FLAG_LEVEL_3 = False
             FLAG_LEVEL_4 = True
+            press = 1
             for sprite in all_sprites:
                 sprite.kill()
             start()
@@ -444,6 +462,7 @@ while running:
         if len(bricks) <= 104 and FLAG_LEVEL_4:
             FLAG_LEVEL_4 = False
             FLAG_WIN = True
+            press = 1
             pygame.time.set_timer(TIME, 900)
             for sprite in all_sprites:
                 sprite.kill()
