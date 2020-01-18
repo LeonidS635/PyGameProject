@@ -91,6 +91,14 @@ def start_screen():
     screen.blit(string_rendered, intro_rect)
 
 
+def draw(number_of_level):
+        font = pygame.font.Font(None, 25)
+        text = font.render("LEVEL" + ' ' + str(number_of_level), 1, (0, 0, 0))
+        text_x = 8
+        text_y = 480
+        screen.blit(text, (text_x, text_y))
+
+
 class GameOver(pygame.sprite.Sprite):
     image1 = load_image("game_over.png")
     image = pygame.transform.scale(image1, (WIDTH + 10, HEIGHT))
@@ -355,6 +363,15 @@ while running:
             for sprite in all_sprites:
                 sprite.kill()
             start()
+
+        if FLAG_LEVEL_1:
+            draw(1)
+        if FLAG_LEVEL_2:
+            draw(2)
+        if FLAG_LEVEL_3:
+            draw(3)
+        if FLAG_LEVEL_4:
+            draw(4)
 
     all_sprites.draw(screen)
     #all_sprites.update()
