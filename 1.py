@@ -9,13 +9,17 @@ FLAG_LEVEL_2 = False
 FLAG_LEVEL_3 = False
 LEVEL_3_BALL = 0
 FLAG_LEVEL_4 = False
+FLAG_WIN = False
 MYEVENTTYPE = 30
+TIME = 20
+GRAVITY = 0.5
 FPS = 50
 WIDTH = 500
 HEIGHT = 500
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 colors = ["Red", "Green", "Blue", "Pink", "Purple", "Yellow", "Brown", "Grey", "Black", "White"]
+screen_rect = (0, 0, WIDTH, HEIGHT)
 
 pygame.init()
 
@@ -28,7 +32,9 @@ all_sprites = pygame.sprite.Group()
 platform = pygame.sprite.Group()
 bricks = pygame.sprite.Group()
 ball = pygame.sprite.Group()
+stars = pygame.sprite.Group()
 gameover = pygame.sprite.Group()
+youwin = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 horizontal_borders_bottom = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
@@ -99,6 +105,42 @@ def draw(number_of_level):
         screen.blit(text, (text_x, text_y))
 
 
+class Particle(pygame.sprite.Sprite):
+    fire = [load_image("star.png", -1)]
+    for scale in (5, 10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        self.velocity = [dx, dy]
+        self.rect.x, self.rect.y = pos
+
+        self.gravity = GRAVITY
+
+        self.add(stars)
+
+    def update(self):
+        self.velocity[1] += self.gravity
+        self.velocity[0] += random.choice([-1, 0, 1])
+
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
+
+
+def create_particles(position):
+    particle_count = 20
+    numbers = range(-5, 6)
+
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
+
+
 class GameOver(pygame.sprite.Sprite):
     image1 = load_image("game_over.png")
     image = pygame.transform.scale(image1, (WIDTH + 10, HEIGHT))
@@ -111,6 +153,28 @@ class GameOver(pygame.sprite.Sprite):
         self.rect.y = 0
 
         self.add(gameover)
+
+    def update(self):
+        v = 300
+        x = v / FPS
+        self.rect.x += x
+        if self.rect.x >= -5:
+            x = -x
+        self.rect = self.rect.move(x, 0)
+
+
+class YouWin(pygame.sprite.Sprite):
+    image1 = load_image("you_win.jpg")
+    image = pygame.transform.scale(image1, (WIDTH + 10, HEIGHT))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = YouWin.image
+        self.rect = self.image.get_rect()
+        self.rect.x = -WIDTH
+        self.rect.y = 0
+
+        self.add(youwin)
 
     def update(self):
         v = 300
@@ -290,11 +354,18 @@ while running:
             if not FLAG_LEVEL_2 and not FLAG_LEVEL_3 and not FLAG_LEVEL_4:
                 FLAG_LEVEL_1 = True
             start()
+
             flag = False
             LEVEL_3_BALL = 0
         if event.type == MYEVENTTYPE and LEVEL_3_BALL < 2 and FLAG_LEVEL_3:
             Ball(5, level_3()[1])
             LEVEL_3_BALL += 1
+        if event.type == TIME and FLAG_WIN:
+            create_particles((150, 34))
+            create_particles((390, 340))
+            create_particles((420, 10))
+            create_particles((150, 150))
+            create_particles((60, 400))
 
     if not flag:
         screen.fill((30, 170, 40))
@@ -302,10 +373,13 @@ while running:
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_r]:
-            for sprite in all_sprites:
-                sprite.kill()
-            start_screen()
-            flag = True
+            if FLAG_WIN:
+                flag = False
+            else:
+                for sprite in all_sprites:
+                    sprite.kill()
+                start_screen()
+                flag = True
 
         elif keys[pygame.K_ESCAPE]:
             for sprite in all_sprites:
@@ -316,6 +390,7 @@ while running:
             FLAG_LEVEL_2 = False
             FLAG_LEVEL_3 = False
             FLAG_LEVEL_4 = False
+            FLAG_WIN = False
 
         elif keys[pygame.K_LEFT]:
             if FLAG_LEVEL_1:
@@ -340,6 +415,8 @@ while running:
         platform.update(x)
         ball.update()
         gameover.update()
+        youwin.update()
+        stars.update()
 
     if not flag:
         if len(bricks) <= 103 and FLAG_LEVEL_1:
@@ -363,6 +440,14 @@ while running:
             for sprite in all_sprites:
                 sprite.kill()
             start()
+
+        if len(bricks) <= 104 and FLAG_LEVEL_4:
+            FLAG_LEVEL_4 = False
+            FLAG_WIN = True
+            pygame.time.set_timer(TIME, 900)
+            for sprite in all_sprites:
+                sprite.kill()
+            YouWin()
 
         if FLAG_LEVEL_1:
             draw(1)
