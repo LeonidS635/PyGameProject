@@ -458,7 +458,7 @@ while running:
         stars.update()
 
     if not flag:
-        if len(bricks) <= 100 and FLAG_LEVEL_1:
+        if len(bricks) == 0 and FLAG_LEVEL_1:
             FLAG_LEVEL_1 = False
             FLAG_LEVEL_2 = True
             press = 1
@@ -466,7 +466,7 @@ while running:
                 sprite.kill()
             start()
 
-        if len(bricks) <= 103 and FLAG_LEVEL_2:
+        if len(bricks) == 0 and FLAG_LEVEL_2:
             FLAG_LEVEL_2 = False
             FLAG_LEVEL_3 = True
             LEVEL_3_BALL = 0
@@ -475,7 +475,7 @@ while running:
                 sprite.kill()
             start()
 
-        if len(bricks) <= 100 and FLAG_LEVEL_3:
+        if len(bricks) == 0 and FLAG_LEVEL_3:
             FLAG_LEVEL_3 = False
             FLAG_LEVEL_4 = True
             press = 1
@@ -483,7 +483,7 @@ while running:
                 sprite.kill()
             start()
 
-        if len(bricks) <= 101 and FLAG_LEVEL_4:
+        if len(bricks) == 0 and FLAG_LEVEL_4:
             FLAG_LEVEL_4 = False
             FLAG_WIN = True
             press = 1
