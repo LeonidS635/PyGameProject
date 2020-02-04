@@ -101,11 +101,11 @@ def start_screen():
 
 
 def draw(number_of_level):
-        font = pygame.font.Font(None, 25)
-        text = font.render("LEVEL" + ' ' + str(number_of_level), 1, (0, 0, 0))
-        text_x = 8
-        text_y = 480
-        screen.blit(text, (text_x, text_y))
+    font = pygame.font.Font(None, 25)
+    text = font.render("LEVEL" + ' ' + str(number_of_level), 1, (0, 0, 0))
+    text_x = 8
+    text_y = 480
+    screen.blit(text, (text_x, text_y))
 
 
 class Particle(pygame.sprite.Sprite):
@@ -280,12 +280,14 @@ class Ball(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, platform):
             platform_list = pygame.sprite.spritecollide(self, platform, False)
             for pl in platform_list:
-                if abs(self.rect.y - pl.rect.y) < 8 and 0 < pl.rect.center[0] - self.rect.center[0] < 30:
+                if ((abs(self.rect.y - pl.rect.y) < 8) and (
+                        0 < pl.rect.center[0] - self.rect.center[0] < 30)):
                     self.rect.x = pl.rect.x - 11
                     self.vy = -self.v / FPS
                     self.vx = -self.v / FPS
                     pl.vx = 0
-                elif abs(self.rect.y - pl.rect.y) < 8 and 0 < self.rect.center[0] - pl.rect.center[0] < 30:
+                elif ((abs(self.rect.y - pl.rect.y) < 8) and (
+                        0 < self.rect.center[0] - pl.rect.center[0] < 30)):
                     self.rect.x = pl.rect.x + 50
                     self.vy = -self.v / FPS
                     self.vx = self.v / FPS
@@ -296,9 +298,11 @@ class Ball(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, bricks):
             brick_list = pygame.sprite.spritecollide(self, bricks, True)
             for brick in brick_list:
-                if abs(self.rect.y - brick.rect.y) < 8 and 0 < brick.rect.center[0] - self.rect.center[0] < 38:
+                if ((abs(self.rect.y - brick.rect.y) < 8) and (
+                        0 < brick.rect.center[0] - self.rect.center[0] < 38)):
                     self.vx = -self.vx
-                elif abs(self.rect.y - brick.rect.y) < 8 and 0 < self.rect.center[0] - brick.rect.center[0] < 38:
+                elif ((abs(self.rect.y - brick.rect.y) < 8) and (
+                        0 < self.rect.center[0] - brick.rect.center[0] < 38)):
                     self.vx = -self.vx
                 else:
                     self.vy = -self.vy
